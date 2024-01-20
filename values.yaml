@@ -1,0 +1,74 @@
+server:
+ service:
+    ## If false, no Service will be created for the Prometheus server
+    ## type: LoadBalancer
+   enabled: true
+   externalIPs: []
+
+   loadBalancerIP: ""
+   loadBalancerSourceRanges: []
+   servicePort: 80
+   sessionAffinity: None
+   type: LoadBalancer
+
+serverFiles:
+  ## Alerts configuration 
+  ## this is example rule(bitnami/nginx) 
+  ## ab -n 20000 -c 10 http://your webserver ip/ , then alertmanager will message to your slack channel 
+  ## Ref: https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+  alerting_rules.yml:
+    groups:
+    - name: high request
+      rules:
+        - alert: WebServerConnectivity
+          expr: nginx_http_requests_total{instance="nginx:9113", job="nginx"} > 20000
+          for: 10s
+          labels:
+            severity: 'critical'
+          annotations:
+            description: 'The total HTTP requests is higher than 20000 per 10sec.'
+            summary: 'High request rate on nginx'
+            
+  prometheus.yml:
+    rule_files:
+      - /etc/config/recording_rules.yml
+      - /etc/config/alerting_rules.yml
+    ## Below two files are DEPRECATED will be removed from this default values file
+      - /etc/config/rules
+      - /etc/config/alerts
+   
+    scrape_configs:
+      - job_name: prometheus
+        static_configs:
+          - targets:
+            - localhost:9090
+
+      - job_name: your_exporter
+        static_configs:
+          - targets:
+            - your_exporter:9100
+
+
+alertmanager:
+  ## If false, alertmanager will not be installed
+  enabled: true
+  config:
+    global:
+       slack_api_url: your_slack_api_url
+    receivers:
+      - name: 'slack'
+      - name: '$(your_slack_id)'
+        slack_configs:
+        - channel: '#your_channel_name'
+          send_resolved: true
+          title: ''
+          text:
+    route:
+      group_wait: 0s
+      group_interval: 30s
+      receiver: 'slack'
+      repeat_interval: 5s
+      routes:
+        - receiver: 'your_slcak_id'
+        
+
