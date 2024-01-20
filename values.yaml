@@ -51,13 +51,14 @@ serverFiles:
 
 alertmanager:
   ## If false, alertmanager will not be installed
+  ## channel : public channel
   enabled: true
   config:
     global:
        slack_api_url: your_slack_api_url
     receivers:
       - name: 'slack'
-      - name: '$(your_slack_id)'
+      - name: 'your_slack_id'
         slack_configs:
         - channel: '#your_channel_name'
           send_resolved: true
